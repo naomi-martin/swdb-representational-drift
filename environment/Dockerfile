@@ -1,4 +1,4 @@
-# hash:sha256:de132c0401f4c96a1fabad1a40268cf9db504e376cd4316076a959953a4d4fe9
+# hash:sha256:eee14cd5c11b13604efe5b91a179a1cbfe649ff26b130163ce2d52d19ee3ac3e
 FROM registry.codeocean.allenneuraldynamics.org/codeocean/jupyterlab:3.0.9-miniconda4.9.2-python3.8-ubuntu20.04
 
 ARG DEBIAN_FRONTEND=noninteractive
@@ -11,6 +11,10 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         curl=7.68.0-1ubuntu2.19 \
     && rm -rf /var/lib/apt/lists/*
+
+RUN conda install -y \
+        umap \
+    && conda clean -ya
 
 COPY postInstall /
 RUN /postInstall
