@@ -21,7 +21,8 @@ def get_events(boc: BrainObservatoryCache, session_id: int, region: str, bin_wid
     cell_ids = data_set.get_cell_specimen_ids()
     cell_indices = data_set.get_cell_specimen_indices(cell_ids)
     areas = [cell['area'] for cell in boc.get_cell_specimens(ids=cell_ids)]
-    zipped = [(area, cell_index, cell_id) for area, cell_index, cell_id in zip(areas,cell_indices, cell_ids) if area == "VISp"]
+    zipped = [(area, cell_index, cell_id) for area, cell_index, cell_id in zip(areas,cell_indices, cell_ids) if area == region]
+    assert len(zipped) > 0, "Region not in session"
     region_df = pd.DataFrame(zipped, columns=["area", "cell_index", "cell_id"]).set_index("cell_id")
     unbinned_df = pd.DataFrame(boc.get_ophys_experiment_events(ophys_experiment_id=session_id)[region_df.cell_index.values], index=region_df.index)
-    return unbinned_df.rolling(window=bin_width, min_periods=None, axis=1, step=10).sum().fillna(0)
+    return unbinned_df.rolling(window=bin_width, min_periods=None, axis=1, step=bin_width).sum().fillna(0)
