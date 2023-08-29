@@ -2,7 +2,7 @@ from allensdk.core.brain_observatory_cache import BrainObservatoryCache
 import pandas as pd
 
 """
-This file contains utility functions for getting events.
+This file contains utility functions for getting stim df.
 """
 def create_stim_df(boc:BrainObservatoryCache ,session_id:int)-> pd.DataFrame:
     """This function returns stimulis table with columns[start,end,stim_id,stim_category]"""
