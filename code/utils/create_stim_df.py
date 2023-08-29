@@ -4,7 +4,7 @@ import pandas as pd
 """
 This file contains utility functions for getting events.
 """
-def create_stim_df(boc:BrainObservatoryCache ,session_id:int)-> pd.DataFrame:
+def create_stim_df(boc:BrainObservatoryCache ,session_id:int, static_phase = False)-> pd.DataFrame:
     """This function returns stimulis table with columns[start,end,stim_id,stim_category]"""
     stim_df = pd.DataFrame()
     stim_list = ['drifting_gratings','static_gratings','natural_movie_one',
@@ -35,13 +35,24 @@ def create_stim_df(boc:BrainObservatoryCache ,session_id:int)-> pd.DataFrame:
             stim_df = pd.concat([stim_df,data_df],ignore_index = True)
             del data_df
         elif stim == 'static_gratings':
-            data_df['orientation'] = data_df['orientation'].astype(str)
-            data_df['spatial_frequency'] = data_df['spatial_frequency'].astype(str)
-            data_df['phase'] = data_df['phase'].astype(str)
-            data_df['stim_id'] = data_df['orientation'] + '_' + data_df['spatial_frequency'] + '_'+ data_df['phase']
-            data_df['stim_category'] = str(stim) 
-            data_df = data_df.drop(columns = ['orientation','spatial_frequency','phase'])
-            stim_df = pd.concat([stim_df,data_df],ignore_index = True)
-            del data_df
+            if static_phase == True: 
+                data_df['orientation'] = data_df['orientation'].astype(str)
+                data_df['spatial_frequency'] = data_df['spatial_frequency'].astype(str)
+                data_df['phase'] = data_df['phase'].astype(str)
+                data_df['stim_id'] = data_df['orientation'] + '_' + data_df['spatial_frequency'] + '_'+ data_df['phase']
+                data_df['stim_category'] = str(stim) 
+                data_df = data_df.drop(columns = ['orientation','spatial_frequency','phase'])
+                stim_df = pd.concat([stim_df,data_df],ignore_index = True)
+                del data_df
+            elif static_phase == False:
+                data_df['orientation'] = data_df['orientation'].astype(str)
+                data_df['spatial_frequency'] = data_df['spatial_frequency'].astype(str)
+                data_df['phase'] = data_df['phase'].astype(str)
+                data_df['stim_id'] = data_df['orientation'] + '_' + data_df['spatial_frequency']
+                data_df['stim_category'] = str(stim) 
+                data_df = data_df.drop(columns = ['orientation','spatial_frequency','phase'])
+                stim_df = pd.concat([stim_df,data_df],ignore_index = True)
+                del data_df
+                
             
     return stim_df
