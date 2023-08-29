@@ -29,7 +29,7 @@ def create_stim_df(boc:BrainObservatoryCache ,session_id:int)-> pd.DataFrame:
             data_df['temporal_frequency'] = data_df['temporal_frequency'].astype(str)
             data_df['orientation'] = data_df['orientation'].astype(str)
             data_df['blank_sweep'] = data_df['blank_sweep'].astype(str)
-            data_df['stim_id'] = data_df['temporal_frequency'] + '_' + data_df['orientation'] + '_' +     data_df['blank_sweep']
+            data_df['stim_id'] = data_df['orientation'] + '_' + data_df['temporal_frequency'] + '_' +     data_df['blank_sweep']
             data_df['stim_category'] = str(stim) 
             data_df = data_df.drop(columns = ['temporal_frequency','orientation','blank_sweep'])
             stim_df = pd.concat([stim_df,data_df],ignore_index = True)
