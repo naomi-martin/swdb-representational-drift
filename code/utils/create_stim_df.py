@@ -53,6 +53,7 @@ def create_stim_df(boc:BrainObservatoryCache ,session_id:int, static_phase = Fal
                 data_df = data_df.drop(columns = ['orientation','spatial_frequency','phase'])
                 stim_df = pd.concat([stim_df,data_df],ignore_index = True)
                 del data_df
+    stim_df.index.name ='ind'
                 
             
     return stim_df
