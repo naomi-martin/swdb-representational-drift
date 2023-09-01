@@ -1,3 +1,12 @@
+# We need to import these modules to get started
+import numpy as np
+import pandas as pd
+from sklearn.decomposition import PCA
+import warnings
+from event_utils import get_events
+from create_stim_table import create_stim_df
+
+
 def find_divide_indices(stim_table):
     '''
     Finds the indices where each new stimulus presentation after the first presentation
@@ -82,7 +91,7 @@ def responses_per_stimulus_dg_sg_ns(stim_table, response_matrix):
     return responses_by_stimulus
 
 
-def get_all_relevant_tables_dg_sg_ns(container_id, stimulus_type):
+def get_all_relevant_tables_dg_sg_ns(container_id, stimulus_type, boc):
     '''
     Extracts the responses to each stimulus for each of the three sessions of drifting gratings, 
     static gratings, and natural scenes. 
@@ -100,9 +109,6 @@ def get_all_relevant_tables_dg_sg_ns(container_id, stimulus_type):
         
     # Get session IDs for each session
     session_id = desired_container[session_index]["id"]
-
-    # load in session data 
-    session = boc.get_ophys_experiment_data(ophys_experiment_id=session_id)
 
     # Get all event traces for all neurons in given session 
     all_events = get_events(boc, session_id, "VISp")
@@ -161,7 +167,7 @@ def get_mean_matrices_dg_sg_ns(stim1_responses_by_stimulus, stim2_responses_by_s
     return mean_responses1, mean_responses2, mean_responses3
 
 
-def get_overlapping_cells(container_id):
+def get_overlapping_cells(container_id, boc):
     
     # Load in experiment container data 
     desired_container_id = container_id
@@ -197,10 +203,10 @@ def round_frame(frame:int,events_array:pd.DataFrame,up_down:str)->int:
     return bin_frame
 
 
-def get_mean_response_matrix_movie_one(session_id, container_id, bin_size):
+def get_mean_response_matrix_movie_one(session_id, container_id, bin_size, boc):
     # Get all event traces for overlapping neurons across sessions 
     all_events = get_events(boc, session_id, "VISp", bin_size)
-    overlapping_cells = get_overlapping_cells(container_id)
+    overlapping_cells = get_overlapping_cells(container_id, boc)
     overlapping_cell_events = all_events.loc[overlapping_cells]
 
     # Get full stimulus table for a given session
@@ -223,10 +229,10 @@ def get_mean_response_matrix_movie_one(session_id, container_id, bin_size):
     return mean_response_mtx
 
 
-def get_mean_response_matrix_movie_three(session_id, container_id, bin_size):
+def get_mean_response_matrix_movie_three(session_id, container_id, bin_size, boc):
     # Get all event traces for overlapping neurons across sessions 
     all_events = get_events(boc, session_id, "VISp", bin_size)
-    overlapping_cells = get_overlapping_cells(container_id)
+    overlapping_cells = get_overlapping_cells(container_id, boc)
     overlapping_cell_events = all_events.loc[overlapping_cells]
 
     # Get full stimulus table for a given session
@@ -263,28 +269,28 @@ def get_mean_response_matrix_movie_three(session_id, container_id, bin_size):
     return mean_response_mtx1, mean_response_mtx2
 
 
-def get_all_relevant_tables_movie_one(container_id, bin_size):
+def get_all_relevant_tables_movie_one(container_id, bin_size, boc):
 
     # Select the relevant data for chosen container ID
     desired_container = boc.get_ophys_experiments(experiment_container_ids=[container_id])
     desired_container = sorted(desired_container, key=lambda x: x['session_type']) # sort based on session type so A comes first
     
     # Get full response matrix for each presentation on each day 
-    response_matrix1 = get_mean_response_matrix_movie_one(desired_container[0]["id"], container_id, bin_size)
-    response_matrix2 = get_mean_response_matrix_movie_one(desired_container[1]["id"], container_id, bin_size)
-    response_matrix3 = get_mean_response_matrix_movie_one(desired_container[2]["id"], container_id, bin_size)
+    response_matrix1 = get_mean_response_matrix_movie_one(desired_container[0]["id"], container_id, bin_size, boc)
+    response_matrix2 = get_mean_response_matrix_movie_one(desired_container[1]["id"], container_id, bin_size, boc)
+    response_matrix3 = get_mean_response_matrix_movie_one(desired_container[2]["id"], container_id, bin_size, boc)
     
     return response_matrix1, response_matrix2, response_matrix3
 
 
-def get_all_relevant_tables_movie_three(container_id, bin_size):
+def get_all_relevant_tables_movie_three(container_id, bin_size, boc):
 
     # Select the relevant data for chosen container ID
     desired_container = boc.get_ophys_experiments(experiment_container_ids=[container_id])
     desired_container = sorted(desired_container, key=lambda x: x['session_type']) # sort based on session type so A comes first
     
     # Get full response matrix for each presentation on each day 
-    response_matrix1, response_matrix2 = get_response_matrix_movie_three(desired_container[0]["id"], container_id, bin_size)
+    response_matrix1, response_matrix2 = get_mean_response_matrix_movie_three(desired_container[0]["id"], container_id, bin_size, boc)
     
     return response_matrix1, response_matrix2
 
