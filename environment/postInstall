@@ -9,3 +9,5 @@ pip install scikit-learn
 pip install matplotlib==3.7.2
 pip install statsmodels==0.13.2
 pip install plotly
+pip install imageio
+pip install av
