@@ -1,6 +1,6 @@
 # SWDB_2023
 
-This is the template repository for the Visual Coding datasets the 2023 Summer Workshop on the Dynamic Brain.
+This is  repository contains code for our final project at the 2023 Summer Workshop on the Dynamic Brain. Here we analyze how neural population responses to various stimuli change over time. We analyzed the Allen Brain Observatory Visual Coding 2P Imaging datasets.
 
 # Support Policy
 
