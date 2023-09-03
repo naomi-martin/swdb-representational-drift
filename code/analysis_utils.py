@@ -91,7 +91,7 @@ def responses_per_stimulus(stim_table, response_matrix):
     return responses_by_stimulus
 
 
-def get_mean_matrices_three_epochs(stim1_responses_by_stimulus, stim2_responses_by_stimulus, stim3_responses_by_stimulus):
+def get_mean_matrices(stim1_responses_by_stimulus, stim2_responses_by_stimulus, stim3_responses_by_stimulus):
         
     # Average each cell's response to each stimulus (# stimuli, # neurons) across three sessions
     # Session 1
@@ -148,9 +148,11 @@ def get_overlapping_cells(container_id, boc):
     return overlapping_cell_ids
 
 
-def round_frame(frame:int,events_array:pd.DataFrame,up_down:str)->int:
-    """This function will round start, end frame to nearest bin in events """
-    col_arr = events_array.columns.to_numpy()
+def round_frame(frame, all_events, up_down):
+    """
+    This function will round start, end frame to nearest bin in events dataframe
+    """
+    col_arr = all_events.columns.to_numpy()
     if up_down == 'up':
         bin_frame = col_arr[col_arr > frame].min()
     elif up_down == 'down':
@@ -158,7 +160,7 @@ def round_frame(frame:int,events_array:pd.DataFrame,up_down:str)->int:
     return bin_frame
 
 
-def get_mean_response_matrix_movie_one(session_id, container_id, bin_size, boc):
+def get_mean_response_matrix_movie(session_id, container_id, bin_size, boc):
     # Get all event traces for overlapping neurons across sessions 
     all_events = get_events(boc, session_id, "VISp", bin_size)
     overlapping_cells = get_overlapping_cells(container_id, boc)
@@ -184,73 +186,7 @@ def get_mean_response_matrix_movie_one(session_id, container_id, bin_size, boc):
     return mean_response_mtx
 
 
-def get_mean_response_matrix_movie_three(session_id, container_id, bin_size, boc):
-    # Get all event traces for overlapping neurons across sessions 
-    all_events = get_events(boc, session_id, "VISp", bin_size)
-    overlapping_cells = get_overlapping_cells(container_id, boc)
-    overlapping_cell_events = all_events.loc[overlapping_cells]
-
-    # Get full stimulus table for a given session
-    stim_df = create_stim_df(boc, session_id)
-    movie_df = stim_df[stim_df['stim_category']=="natural_movie_three"]
-    
-    divide_indices = find_divide_indices(movie_df)
-    movie_df1, movie_df2, null = divide_stim_table(movie_df, divide_indices)
-    
-    # Generate response matrix for first epoch
-    num_movie_chunks1 = int(len(movie_df1)/bin_size)
-    mean_response_mtx1 = np.zeros((num_movie_chunks1,len(overlapping_cells)))
-    for i in range(num_movie_chunks1):
-        chunk_df = movie_df1.iloc[0 + (bin_size*i):(bin_size+(bin_size*i))]
-        start,end = chunk_df.start.to_list()[0],chunk_df.end.to_list()[-1]
-        try:
-            response = np.mean(overlapping_cell_events.loc[:,np.arange(round_frame(start,overlapping_cell_events,'down'),round_frame(end,overlapping_cell_events,'up')+bin_size, bin_size)],axis=1)
-            mean_response_mtx1[i,:] = response
-        except Exception as e:
-            print(e)
-            
-    # Generate response matrix for second epoch
-    num_movie_chunks2 = int(len(movie_df2)/bin_size)
-    mean_response_mtx2 = np.zeros((num_movie_chunks2,len(overlapping_cells)))
-    for i in range(num_movie_chunks2):
-        chunk_df = movie_df2.iloc[0 + (bin_size*i):(bin_size+(bin_size*i))]
-        start,end = chunk_df.start.to_list()[0],chunk_df.end.to_list()[-1]
-        try:
-            response = np.mean(overlapping_cell_events.loc[:,np.arange(round_frame(start,overlapping_cell_events,'down'),round_frame(end,overlapping_cell_events,'up')+bin_size, bin_size)],axis=1)
-            mean_response_mtx2[i,:] = response
-        except Exception as e:
-            print(e)
-    
-    return mean_response_mtx1, mean_response_mtx2
-
-
-def get_all_relevant_tables_movie_one(container_id, bin_size, boc):
-
-    # Select the relevant data for chosen container ID
-    desired_container = boc.get_ophys_experiments(experiment_container_ids=[container_id])
-    desired_container = sorted(desired_container, key=lambda x: x['session_type']) # sort based on session type so A comes first
-    
-    # Get full response matrix for each presentation on each day 
-    response_matrix1 = get_mean_response_matrix_movie_one(desired_container[0]["id"], container_id, bin_size, boc)
-    response_matrix2 = get_mean_response_matrix_movie_one(desired_container[1]["id"], container_id, bin_size, boc)
-    response_matrix3 = get_mean_response_matrix_movie_one(desired_container[2]["id"], container_id, bin_size, boc)
-    
-    return response_matrix1, response_matrix2, response_matrix3
-
-
-def get_all_relevant_tables_movie_three(container_id, bin_size, boc):
-
-    # Select the relevant data for chosen container ID
-    desired_container = boc.get_ophys_experiments(experiment_container_ids=[container_id])
-    desired_container = sorted(desired_container, key=lambda x: x['session_type']) # sort based on session type so A comes first
-    
-    # Get full response matrix for each presentation on each day 
-    response_matrix1, response_matrix2 = get_mean_response_matrix_movie_three(desired_container[0]["id"], container_id, bin_size, boc)
-    
-    return response_matrix1, response_matrix2
-
-
-def pca_transform_data_three_epochs(mean_responses1, mean_responses2, mean_responses3, pca_n_components):
+def pca_transform_data(mean_responses1, mean_responses2, mean_responses3, pca_n_components):
     
     # Concatenate mean matrices to fit PCA model
     concat_mean_matrices = np.concatenate((mean_responses1, mean_responses2, mean_responses3), axis=0)
@@ -288,37 +224,4 @@ def pca_transform_data_three_epochs(mean_responses1, mean_responses2, mean_respo
     transformed_data_pca = pd.concat((transformed_data_pca1_df, transformed_data_pca2_df, transformed_data_pca3_df), axis=0)
 
     return transformed_data_pca, pca_results
-
-
-def pca_transform_data_movie_three(mean_responses1, mean_responses2, pca_n_components):    
-    # Concatenate mean matrices to fit PCA model
-    concat_mean_matrices = np.concatenate((mean_responses1, mean_responses2), axis=0)
-    
-    # Perform PCA
-    warnings.filterwarnings('ignore')
-    pca = PCA(n_components=pca_n_components) # create PCA model
-    pca.fit_transform(concat_mean_matrices) # fit the model with the dataset
-    
-    pca_results_dict = {}
-    transformed_data_pca1 = pca.transform(mean_responses1) # transform dataset 
-    components = pca.components_ # list of principal components (PCs)
-    explained_variance_ratio = pca.explained_variance_ratio_ # list of proportion of explained variance for each PC
-    pca_results_dict[0] = {"components": components, "explained_variance_ratio": explained_variance_ratio} # add results to dictionary
-    
-    transformed_data_pca2 = pca.transform(mean_responses2) # transform dataset 
-    components = pca.components_ # list of principal components (PCs)
-    explained_variance_ratio = pca.explained_variance_ratio_ # list of proportion of explained variance for each PC
-    pca_results_dict[1] = {"components": components, "explained_variance_ratio": explained_variance_ratio} # add results to dictionary
-    
-    pca_results = pd.DataFrame(pca_results_dict).T # make a DataFrame
-    
-    # Concatenate dataframes for easy plotting
-    transformed_data_pca1_df = pd.DataFrame(transformed_data_pca1)
-    transformed_data_pca1_df["Session"] = list("1"*len(transformed_data_pca1))
-    transformed_data_pca2_df = pd.DataFrame(transformed_data_pca2)
-    transformed_data_pca2_df["Session"] = list("2"*len(transformed_data_pca2))
-    transformed_data_pca = pd.concat((transformed_data_pca1_df, transformed_data_pca2_df), axis=0)
-
-    return transformed_data_pca, pca_results
-
 
